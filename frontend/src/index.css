@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  font-family: Inter, system-ui, Arial, sans-serif;
+}
+
+html {
+  min-height: 100%;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100%;
+  overflow-x: hidden;
+  background: #F8FAFC;
+  color: #243447;
+}
+
+#root {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
