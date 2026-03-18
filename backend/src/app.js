@@ -14,7 +14,21 @@ const app = express();
 
 app.use(
   cors({
-    origin: env.frontendUrl,
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        env.frontendUrl,
+        "http://localhost:5173"
+      ];
+
+      const isVercelPreview =
+        origin && origin.endsWith(".vercel.app");
+
+      if (!origin || allowedOrigins.includes(origin) || isVercelPreview) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true
   })
 );
