@@ -1,0 +1,22 @@
+[{
+  "_id": {
+    "$oid": "69b047980d35d2d7c52ba432"
+  },
+  "fullName": "Super Admin",
+  "email": "admin@kavery.edu.in",
+  "mobileNo": "9999999999",
+  "passwordHash": "$2a$10$dDQUCgXOHxdJiwG4SRI3J.Ug77.y4Urq2Pkz6ykxBRX3M7TXCZbbS",
+  "role": "SUPER_ADMIN",
+  "departmentIds": [],
+  "isActive": true,
+  "lastLoginAt": {
+    "$date": "2026-03-18T07:23:28.844Z"
+  },
+  "createdAt": {
+    "$date": "2026-03-10T16:32:24.508Z"
+  },
+  "updatedAt": {
+    "$date": "2026-03-18T07:23:28.859Z"
+  },
+  "__v": 0
+}]

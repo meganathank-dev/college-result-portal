@@ -132,7 +132,8 @@ export default function SemestersPage() {
   const buildPayload = () => ({
     number: Number(form.number),
     label: form.label.trim(),
-    status: form.status
+    status: form.status,
+    displayOrder: Number(form.number)
   });
 
   const handleSubmit = async (event) => {

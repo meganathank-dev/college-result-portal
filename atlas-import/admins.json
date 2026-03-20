@@ -1,0 +1,16 @@
+[{
+  "_id": {
+    "$oid": "69a2e24f1d1e88a010f4b071"
+  },
+  "name": "Main Admin",
+  "email": "admin@gmail.com",
+  "password": "$2b$10$xn5iECigDvKHUC4KbxIg1uzNuUdTRfPUXJtPwFU2gzCbHZNUEuk22",
+  "role": "admin",
+  "createdAt": {
+    "$date": "2026-02-28T12:40:47.450Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-28T12:40:47.450Z"
+  },
+  "__v": 0
+}]
