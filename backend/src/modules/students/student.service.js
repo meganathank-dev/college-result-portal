@@ -110,7 +110,7 @@ export const createStudentService = async (payload) => {
 
 export const getAllStudentsService = async () => {
   return populateStudent(
-    Student.find().sort({ createdAt: -1 })
+    Student.find().sort({ fullName: 1 })
   );
 };
 
