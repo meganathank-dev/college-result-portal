@@ -5,20 +5,15 @@ import Modal from "../../components/common/Modal";
 import {
   getSubjectsApi,
   createSubjectApi,
-  updateSubjectApi
+  updateSubjectApi,
 } from "../../api/subjects.api";
 
 const SUBJECT_TYPES = [
   "THEORY",
-  "LAB",
+  "LABORATORY",
   "THEORY_CUM_LAB",
+  "NON_CREDIT",
   "PROJECT",
-  "PRACTICAL",
-  "ELECTIVE",
-  "OPEN_ELECTIVE",
-  "PROFESSIONAL_ELECTIVE",
-  "MANDATORY",
-  "NON_CGPA"
 ];
 
 const emptyForm = {
@@ -30,7 +25,7 @@ const emptyForm = {
   internalMax: "",
   externalMax: "",
   totalMax: "",
-  status: "ACTIVE"
+  status: "ACTIVE",
 };
 
 function StatusBadge({ status, isActive }) {
@@ -44,7 +39,9 @@ function StatusBadge({ status, isActive }) {
     : "bg-[#FFF4E8] text-[#9A6A2A] border-[#F1DEC2]";
 
   return (
-    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${styles}`}>
+    <span
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${styles}`}
+    >
       {resolvedActive ? "ACTIVE" : "INACTIVE"}
     </span>
   );
@@ -69,9 +66,12 @@ const resolveShortName = (subject) =>
   "-";
 
 const resolveCredits = (subject) => subject.credits ?? subject.credit ?? "-";
-const resolveInternalMax = (subject) => subject.internalMax ?? subject.internalMarks ?? 0;
-const resolveExternalMax = (subject) => subject.externalMax ?? subject.externalMarks ?? 0;
-const resolveTotalMax = (subject) => subject.totalMax ?? subject.totalMarks ?? 0;
+const resolveInternalMax = (subject) =>
+  subject.internalMax ?? subject.internalMarks ?? 0;
+const resolveExternalMax = (subject) =>
+  subject.externalMax ?? subject.externalMarks ?? 0;
+const resolveTotalMax = (subject) =>
+  subject.totalMax ?? subject.totalMarks ?? 0;
 
 export default function SubjectsPage() {
   const [subjects, setSubjects] = useState([]);
@@ -117,13 +117,15 @@ export default function SubjectsPage() {
           String(resolveCredits(subject)),
           String(resolveInternalMax(subject)),
           String(resolveExternalMax(subject)),
-          String(resolveTotalMax(subject))
+          String(resolveTotalMax(subject)),
         ]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(term));
 
       const matchesType =
-        !typeFilter || String(resolveSubjectType(subject)).toUpperCase() === String(typeFilter).toUpperCase();
+        !typeFilter ||
+        String(resolveSubjectType(subject)).toUpperCase() ===
+          String(typeFilter).toUpperCase();
 
       return matchesSearch && matchesType;
     });
@@ -141,13 +143,19 @@ export default function SubjectsPage() {
     setForm({
       code: subject.code || "",
       name: subject.name || "",
-      shortName: resolveShortName(subject) === "-" ? "" : resolveShortName(subject),
-      subjectType: resolveSubjectType(subject) === "-" ? "THEORY" : resolveSubjectType(subject),
-      credits: String(resolveCredits(subject) === "-" ? "" : resolveCredits(subject)),
+      shortName:
+        resolveShortName(subject) === "-" ? "" : resolveShortName(subject),
+      subjectType:
+        resolveSubjectType(subject) === "-"
+          ? "THEORY"
+          : resolveSubjectType(subject),
+      credits: String(
+        resolveCredits(subject) === "-" ? "" : resolveCredits(subject),
+      ),
       internalMax: String(resolveInternalMax(subject)),
       externalMax: String(resolveExternalMax(subject)),
       totalMax: String(resolveTotalMax(subject)),
-      status: String(subject.status || "ACTIVE").toUpperCase()
+      status: String(subject.status || "ACTIVE").toUpperCase(),
     });
     setFormError("");
     setModalOpen(true);
@@ -168,8 +176,12 @@ export default function SubjectsPage() {
       const next = { ...prev, [name]: value };
 
       if (name === "internalMax" || name === "externalMax") {
-        const internal = Number(name === "internalMax" ? value || 0 : next.internalMax || 0);
-        const external = Number(name === "externalMax" ? value || 0 : next.externalMax || 0);
+        const internal = Number(
+          name === "internalMax" ? value || 0 : next.internalMax || 0,
+        );
+        const external = Number(
+          name === "externalMax" ? value || 0 : next.externalMax || 0,
+        );
         next.totalMax = String(internal + external);
       }
 
@@ -193,7 +205,11 @@ export default function SubjectsPage() {
     const external = Number(form.externalMax || 0);
     const total = Number(form.totalMax || 0);
 
-    if ([internal, external, total].some((value) => Number.isNaN(value) || value < 0)) {
+    if (
+      [internal, external, total].some(
+        (value) => Number.isNaN(value) || value < 0,
+      )
+    ) {
       return "Marks fields must be valid non-negative numbers";
     }
 
@@ -213,7 +229,7 @@ export default function SubjectsPage() {
     internalMax: Number(form.internalMax || 0),
     externalMax: Number(form.externalMax || 0),
     totalMax: Number(form.totalMax || 0),
-    status: form.status
+    status: form.status,
   });
 
   const handleSubmit = async (event) => {
@@ -240,7 +256,25 @@ export default function SubjectsPage() {
       await loadSubjects();
       closeModal();
     } catch (err) {
-      setFormError(err?.response?.data?.message || "Failed to save subject");
+      console.error("Create subject error:", err?.response?.data || err);
+
+      const rawMessage =
+        err?.response?.data?.errors?.[0]?.message ||
+        err?.response?.data?.message ||
+        "";
+
+      let friendlyMessage =
+        "Unable to save subject. Please check the entered details.";
+
+      if (rawMessage.toLowerCase().includes("invalid enum value")) {
+        friendlyMessage = "Invalid subject type selected.";
+      } else if (rawMessage.toLowerCase().includes("subject code")) {
+        friendlyMessage = "Subject code is invalid or already exists.";
+      } else if (rawMessage.toLowerCase().includes("total max")) {
+        friendlyMessage = "Total max must match internal max and external max.";
+      }
+
+      setFormError(friendlyMessage);
     } finally {
       setSaving(false);
     }
@@ -320,18 +354,31 @@ export default function SubjectsPage() {
                 <tbody>
                   {filteredSubjects.map((subject) => (
                     <tr key={subject._id} className="border-t border-[#E6ECF2]">
-                      <td className="px-4 py-4 font-medium text-[#243447]">{subject.code}</td>
-                      <td className="px-4 py-4 text-[#243447]">{subject.name}</td>
-                      <td className="px-4 py-4 text-[#243447]">{resolveShortName(subject)}</td>
+                      <td className="px-4 py-4 font-medium text-[#243447]">
+                        {subject.code}
+                      </td>
+                      <td className="px-4 py-4 text-[#243447]">
+                        {subject.name}
+                      </td>
+                      <td className="px-4 py-4 text-[#243447]">
+                        {resolveShortName(subject)}
+                      </td>
                       <td className="px-4 py-4">
                         <TypeBadge value={resolveSubjectType(subject)} />
                       </td>
-                      <td className="px-4 py-4 text-[#243447]">{resolveCredits(subject)}</td>
                       <td className="px-4 py-4 text-[#243447]">
-                        {resolveInternalMax(subject)} / {resolveExternalMax(subject)} / {resolveTotalMax(subject)}
+                        {resolveCredits(subject)}
+                      </td>
+                      <td className="px-4 py-4 text-[#243447]">
+                        {resolveInternalMax(subject)} /{" "}
+                        {resolveExternalMax(subject)} /{" "}
+                        {resolveTotalMax(subject)}
                       </td>
                       <td className="px-4 py-4">
-                        <StatusBadge status={subject.status} isActive={subject.isActive} />
+                        <StatusBadge
+                          status={subject.status}
+                          isActive={subject.isActive}
+                        />
                       </td>
                       <td className="px-4 py-4">
                         <button
@@ -363,7 +410,10 @@ export default function SubjectsPage() {
                       </p>
                     </div>
 
-                    <StatusBadge status={subject.status} isActive={subject.isActive} />
+                    <StatusBadge
+                      status={subject.status}
+                      isActive={subject.isActive}
+                    />
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -371,10 +421,14 @@ export default function SubjectsPage() {
                   </div>
 
                   <div className="mt-4 space-y-2 text-sm text-[#243447]">
-                    <p><span className="font-medium">Credits:</span> {resolveCredits(subject)}</p>
+                    <p>
+                      <span className="font-medium">Credits:</span>{" "}
+                      {resolveCredits(subject)}
+                    </p>
                     <p>
                       <span className="font-medium">Marks:</span>{" "}
-                      {resolveInternalMax(subject)} / {resolveExternalMax(subject)} / {resolveTotalMax(subject)}
+                      {resolveInternalMax(subject)} /{" "}
+                      {resolveExternalMax(subject)} / {resolveTotalMax(subject)}
                     </p>
                   </div>
 
