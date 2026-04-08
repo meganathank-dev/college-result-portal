@@ -12,8 +12,13 @@ const SUBJECT_TYPES = [
   "THEORY",
   "LABORATORY",
   "THEORY_CUM_LAB",
-  "NON_CREDIT",
   "PROJECT",
+  "PRACTICAL",
+  "ELECTIVE",
+  "OPEN_ELECTIVE",
+  "PROFESSIONAL_ELECTIVE",
+  "MANDATORY",
+  "NON_CREDIT"
 ];
 
 const emptyForm = {

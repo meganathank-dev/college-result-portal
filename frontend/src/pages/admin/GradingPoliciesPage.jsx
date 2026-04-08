@@ -6,7 +6,7 @@ import { getRegulationsApi } from "../../api/regulations.api";
 import {
   getGradingPoliciesApi,
   createGradingPolicyApi,
-  updateGradingPolicyApi
+  updateGradingPolicyApi,
 } from "../../api/gradingPolicies.api";
 
 const SUBJECT_TYPES = [
@@ -19,7 +19,7 @@ const SUBJECT_TYPES = [
   "OPEN_ELECTIVE",
   "PROFESSIONAL_ELECTIVE",
   "MANDATORY",
-  "NON_CGPA"
+  "NON_CREDIT",
 ];
 
 const FORMULA_TYPES = ["CBCS"];
@@ -35,7 +35,7 @@ const emptyForm = {
   totalMin: "",
   gpaFormulaType: "CBCS",
   cgpaFormulaType: "CBCS",
-  status: "ACTIVE"
+  status: "ACTIVE",
 };
 
 function StatusBadge({ status, isActive }) {
@@ -66,11 +66,17 @@ function TypeBadge({ value }) {
 }
 
 const resolveRegulationId = (policy) =>
-  String(policy?.regulationId?._id || policy?.regulationId || policy?.regulation || "");
+  String(
+    policy?.regulationId?._id ||
+      policy?.regulationId ||
+      policy?.regulation ||
+      "",
+  );
 
 const resolveRegulationName = (policy, regulationMap) => {
   if (policy?.regulationId?.name) return policy.regulationId.name;
-  if (policy?.regulationId?.regulationName) return policy.regulationId.regulationName;
+  if (policy?.regulationId?.regulationName)
+    return policy.regulationId.regulationName;
 
   const regulation = regulationMap.get(resolveRegulationId(policy));
   return (
@@ -134,13 +140,15 @@ export default function GradingPoliciesPage() {
 
       const [policyResponse, regulationResponse] = await Promise.all([
         getGradingPoliciesApi(),
-        getRegulationsApi()
+        getRegulationsApi(),
       ]);
 
       setPolicies(policyResponse?.data || []);
       setRegulations(regulationResponse?.data || []);
     } catch (err) {
-      setPageError(err?.response?.data?.message || "Failed to load grading policies");
+      setPageError(
+        err?.response?.data?.message || "Failed to load grading policies",
+      );
     } finally {
       setLoading(false);
     }
@@ -176,13 +184,14 @@ export default function GradingPoliciesPage() {
           String(resolveTotalMax(policy)),
           String(resolveGradeRuleCount(policy)),
           policy?.gpaFormulaType,
-          policy?.cgpaFormulaType
+          policy?.cgpaFormulaType,
         ]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(term));
 
       const matchesRegulation =
-        !regulationFilter || resolveRegulationId(policy) === String(regulationFilter);
+        !regulationFilter ||
+        resolveRegulationId(policy) === String(regulationFilter);
 
       const matchesSubjectType =
         !subjectTypeFilter ||
@@ -204,7 +213,10 @@ export default function GradingPoliciesPage() {
     setEditingPolicy(policy);
     setForm({
       regulationId: resolveRegulationId(policy),
-      subjectType: resolveSubjectType(policy) === "-" ? "THEORY" : resolveSubjectType(policy),
+      subjectType:
+        resolveSubjectType(policy) === "-"
+          ? "THEORY"
+          : resolveSubjectType(policy),
       internalMax: String(resolveInternalMax(policy)),
       externalMax: String(resolveExternalMax(policy)),
       totalMax: String(resolveTotalMax(policy)),
@@ -213,7 +225,7 @@ export default function GradingPoliciesPage() {
       totalMin: String(resolveTotalMin(policy)),
       gpaFormulaType: policy?.gpaFormulaType || "CBCS",
       cgpaFormulaType: policy?.cgpaFormulaType || "CBCS",
-      status: policy?.isActive ? "ACTIVE" : "INACTIVE"
+      status: policy?.isActive ? "ACTIVE" : "INACTIVE",
     });
     setFormError("");
     setModalOpen(true);
@@ -234,8 +246,12 @@ export default function GradingPoliciesPage() {
       const next = { ...prev, [name]: value };
 
       if (name === "internalMax" || name === "externalMax") {
-        const internal = Number(name === "internalMax" ? value || 0 : next.internalMax || 0);
-        const external = Number(name === "externalMax" ? value || 0 : next.externalMax || 0);
+        const internal = Number(
+          name === "internalMax" ? value || 0 : next.internalMax || 0,
+        );
+        const external = Number(
+          name === "externalMax" ? value || 0 : next.externalMax || 0,
+        );
         next.totalMax = String(internal + external);
       }
 
@@ -255,9 +271,14 @@ export default function GradingPoliciesPage() {
     const totalMin = Number(form.totalMin || 0);
 
     if (
-      [internalMax, externalMax, totalMax, internalMin, externalMin, totalMin].some(
-        (value) => Number.isNaN(value) || value < 0
-      )
+      [
+        internalMax,
+        externalMax,
+        totalMax,
+        internalMin,
+        externalMin,
+        totalMin,
+      ].some((value) => Number.isNaN(value) || value < 0)
     ) {
       return "All marks fields must be valid non-negative numbers";
     }
@@ -281,6 +302,16 @@ export default function GradingPoliciesPage() {
     return "";
   };
 
+  const defaultGradeRules = [
+    { grade: "O", min: 91, max: 100, point: 10 },
+    { grade: "A+", min: 81, max: 90, point: 9 },
+    { grade: "A", min: 71, max: 80, point: 8 },
+    { grade: "B+", min: 61, max: 70, point: 7 },
+    { grade: "B", min: 57, max: 60, point: 6 },
+    { grade: "C", min: 50, max: 56, point: 5 },
+    { grade: "U", min: 0, max: 49, point: 0 },
+  ];
+
   const buildPayload = () => ({
     regulationId: form.regulationId,
     subjectType: form.subjectType.trim().toUpperCase(),
@@ -292,7 +323,8 @@ export default function GradingPoliciesPage() {
     totalMin: Number(form.totalMin || 0),
     gpaFormulaType: form.gpaFormulaType,
     cgpaFormulaType: form.cgpaFormulaType,
-    isActive: form.status === "ACTIVE"
+    isActive: form.status === "ACTIVE",
+    gradeRules: defaultGradeRules,
   });
 
   const handleSubmit = async (event) => {
@@ -319,7 +351,9 @@ export default function GradingPoliciesPage() {
       await loadData();
       closeModal();
     } catch (err) {
-      setFormError(err?.response?.data?.message || "Failed to save grading policy");
+      setFormError(
+        err?.response?.data?.message || "Failed to save grading policy",
+      );
     } finally {
       setSaving(false);
     }
@@ -436,13 +470,17 @@ export default function GradingPoliciesPage() {
                         {resolveTotalMin(policy)}
                       </td>
                       <td className="px-4 py-4 text-[#243447]">
-                        {resolveInternalMax(policy)} / {resolveExternalMax(policy)} / {resolveTotalMax(policy)}
+                        {resolveInternalMax(policy)} /{" "}
+                        {resolveExternalMax(policy)} / {resolveTotalMax(policy)}
                       </td>
                       <td className="px-4 py-4 text-[#243447]">
                         {resolveGradeRuleCount(policy)}
                       </td>
                       <td className="px-4 py-4">
-                        <StatusBadge status={policy.status} isActive={policy.isActive} />
+                        <StatusBadge
+                          status={policy.status}
+                          isActive={policy.isActive}
+                        />
                       </td>
                       <td className="px-4 py-4">
                         <button
@@ -474,7 +512,10 @@ export default function GradingPoliciesPage() {
                       </p>
                     </div>
 
-                    <StatusBadge status={policy.status} isActive={policy.isActive} />
+                    <StatusBadge
+                      status={policy.status}
+                      isActive={policy.isActive}
+                    />
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -496,7 +537,8 @@ export default function GradingPoliciesPage() {
                     </p>
                     <p>
                       <span className="font-medium">Max Marks:</span>{" "}
-                      {resolveInternalMax(policy)} / {resolveExternalMax(policy)} / {resolveTotalMax(policy)}
+                      {resolveInternalMax(policy)} /{" "}
+                      {resolveExternalMax(policy)} / {resolveTotalMax(policy)}
                     </p>
                     <p>
                       <span className="font-medium">Grade Rules:</span>{" "}
